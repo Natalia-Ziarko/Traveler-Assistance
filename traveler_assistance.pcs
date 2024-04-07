@@ -1,0 +1,51 @@
+create or replace package traveler_assistance_package as
+
+type r_region_currency is record(country_name countries.country_name%type, region_name regions.region_name%type, currency_name currencies.currency_name%type);
+
+type r_country_info is record(region_name regions.region_name%type, country_name countries.country_name%type, currency_name currencies.currency_name%type);
+type t_countries_in_same_region is table of r_country_info index by pls_integer;
+
+type r_country_language is record(country_name countries.country_name%type, language_name languages.language_name%type, official spoken_languages.official%type);
+type t_country_languages is table of r_country_language index by pls_integer;
+
+/**
+ * name             country_demographics                                   Procedure returns country name, location, capital city, population, airports and climate
+ * parameter in     p_country_name           varchar2                      Country name
+ */
+procedure country_demographics(p_country_name varchar2);
+
+/**
+ * name             find_region_and_currency                               Procedure returns country name, region name and currency
+ * parameter in     p_country_name           varchar2                      Country name
+ * parameter out    p_region_currency        r_region_currency             Record type with country name, region name and currency
+ */
+procedure find_region_and_currency(p_country_name varchar2, p_region_currency out r_region_currency);
+
+/**
+ * name             countries_in_same_region                               Procedure returns the table of records including region name, country name and currency
+ * parameter in     p_region_name            varchar2                      Region name
+ * parameter out    p_same_region_output     t_countries_in_same_region    Table of r_country_info record type
+ */
+procedure countries_in_same_region(p_region_name varchar2, p_same_region_output out t_countries_in_same_region);
+
+/**
+ * name             print_region_array                                     Procedure displays the table received from the countries_in_same_region procedure
+ * parameter in     p_same_region_output     t_countries_in_same_region    Table of r_country_info record type
+ */
+procedure print_region_array(p_same_region_output t_countries_in_same_region);
+
+/**
+ * name             country_languages                                      Procedure returns the table of records including country name, language and information if the language is official
+ * parameter in     p_country_name           varchar2                      Country name
+ * parameter out    p_languages_info_output  t_country_languages           Table of r_country_language record type
+ */
+procedure country_languages(p_country_name varchar2, p_languages_info_output out t_country_languages);
+
+/**
+ * name             print_language_array                                   Procedure displays the table received from the country_languages procedure
+ * parameter in     p_languages_info_output  t_country_languages           Table of r_country_language record type
+ */
+procedure print_language_array(p_languages_info_output t_country_languages);
+
+end traveler_assistance_package;
+/

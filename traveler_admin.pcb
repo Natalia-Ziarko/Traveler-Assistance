@@ -1,0 +1,48 @@
+create or replace package body traveler_admin_package as
+
+procedure display_disabled_triggers as
+v_trg_count pls_integer;
+begin
+    select count(trigger_name) into v_trg_count from user_triggers where upper(status) = 'DISABLED';
+    
+    if (v_trg_count = 0) then
+        dbms_output.put_line('No data found');
+    else
+        for i in (select trigger_name from user_triggers where upper(status) = 'DISABLED')
+        loop
+            dbms_output.put_line(i.trigger_name);   
+        end loop;
+    end if;    
+    
+end display_disabled_triggers;
+
+function all_dependent_objects(p_object_name varchar2) return t_object_array as
+cursor c is select name, type, referenced_name, referenced_type from user_dependencies where upper(name) = upper(p_object_name);
+v_t_object_array t_object_array;
+v_i pls_integer := 1;
+begin
+    for object in c
+    loop
+        v_t_object_array(v_i) := object;
+        v_i := v_i + 1;
+    end loop;
+    
+    if (v_t_object_array.count = 0) then v_t_object_array(v_i).name := 'No data found'; end if;
+    
+    return v_t_object_array;
+
+end all_dependent_objects; 
+
+procedure print_dependent_objects(p_t_object_array t_object_array) as
+begin
+    for i in 1..p_t_object_array.count
+    loop
+        dbms_output.put_line('Name: '                 || p_t_object_array(i).name
+                             || ', Type: '            || nvl(p_t_object_array(i).type, '<not found>')
+                             || ', Referenced_name: ' || nvl(p_t_object_array(i).referenced_name, '<not found>')
+                             || ', Referenced_type: ' || nvl(p_t_object_array(i).referenced_type, '<not found>'));
+    end loop;
+end print_dependent_objects;
+
+end traveler_admin_package;
+/

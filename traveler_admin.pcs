@@ -1,0 +1,29 @@
+create or replace package traveler_admin_package as
+
+type r_object is record(name            user_dependencies.name%type,
+                        type            user_dependencies.type%type,
+                        referenced_name user_dependencies.referenced_name%type,
+                        referenced_type user_dependencies.referenced_type%type);
+
+type t_object_array is table of r_object index by pls_integer;                          
+
+/**
+ * name             display_disabled_triggers              Procedure displays names of all the disabled triggers
+ */
+procedure display_disabled_triggers;
+
+/**
+ * name             all_dependent_objects                  Function returns all the dependent objects for a particular object
+ * parameter in     p_object_name   varchar2               Object name
+ * return           t_object_array                         Table of r_object record type   
+ */
+function all_dependent_objects(p_object_name varchar2) return t_object_array;
+
+/**
+ * name             print_dependent_objects                Procedure displays all the dependent objects for a particular object
+ * parameter in     p_t_object_array   t_object_array      Table of r_object record type
+ */
+procedure print_dependent_objects(p_t_object_array t_object_array);
+
+end traveler_admin_package;
+/

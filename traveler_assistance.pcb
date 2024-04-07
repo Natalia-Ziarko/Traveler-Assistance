@@ -1,0 +1,132 @@
+create or replace package body traveler_assistance_package as
+
+procedure country_demographics(p_country_name varchar2) as
+v_location   countries.location%type;
+v_capitol    countries.capitol%type;
+v_population countries.population%type;
+v_airports   countries.airports%type;
+v_climate    countries.climate%type;
+begin
+    select location, capitol, population, airports, climate into v_location, v_capitol, v_population, v_airports, v_climate
+    from countries
+    where lower(country_name) = lower(p_country_name);
+    
+    dbms_output.put_line('Country: '       || p_country_name || chr(10)
+                         || 'Location: '   || v_location     || chr(10) 
+                         || 'Capitol: '    || v_capitol      || chr(10) 
+                         || 'Population: ' || v_population   || chr(10)
+                         || 'Airports: '   || v_airports     || chr(10) 
+                         || 'Climate: '    || v_climate
+                         );
+
+exception
+when no_data_found then
+    dbms_output.put_line('Country '||p_country_name||' was not found');  
+end;
+
+procedure find_region_and_currency(p_country_name varchar2, p_region_currency out r_region_currency) as
+begin
+    select country_name, region_name, currency_name into p_region_currency.country_name, p_region_currency.region_name, p_region_currency.currency_name
+    from regions r
+    left join countries co on co.region_id = r.region_id
+    left join currencies cu on cu.currency_code = co.currency_code
+    where lower(country_name) = lower(p_country_name);
+    
+    dbms_output.put_line('Region: '      || p_region_currency.country_name  || chr(10)
+                         || 'Country: '  || p_region_currency.region_name   || chr(10)
+                         || 'Currency: ' || p_region_currency.currency_name);
+
+exception
+when no_data_found then
+    dbms_output.put_line('Country '||p_country_name||' was not found');
+when too_many_rows then
+    dbms_output.put_line('Found more data than expected');
+end;
+
+procedure countries_in_same_region(p_region_name varchar2, p_same_region_output out t_countries_in_same_region) as
+p_country_info r_country_info;
+v_index        pls_integer := 1;     
+begin
+    for i in (select region_name, country_name, currency_name
+              from regions r
+              left join countries co on co.region_id = r.region_id
+              left join currencies cu on cu.currency_code = co.currency_code
+              where lower(region_name) = lower(p_region_name))
+    loop
+        p_country_info.region_name   := i.region_name;
+        p_country_info.country_name  := i.country_name;
+        p_country_info.currency_name := i.currency_name;
+        
+        p_same_region_output(v_index) := p_country_info;
+        v_index := v_index + 1;
+    end loop;
+    
+exception
+when no_data_found then
+    dbms_output.put_line('No data found in the countries_in_same_region procedure');            
+end countries_in_same_region;
+
+procedure print_region_array(p_same_region_output t_countries_in_same_region) as
+v_t_countries_in_same_region t_countries_in_same_region;
+begin 
+    if (p_same_region_output.count = 0) then
+        dbms_output.put_line('No data found');
+        return;
+    else    
+        for i in 1..p_same_region_output.count
+        loop
+            dbms_output.put_line('Region: '        || p_same_region_output(i).region_name
+                                 || ', Country: '  || p_same_region_output(i).country_name
+                                 || ', Currency: ' || p_same_region_output(i).currency_name);
+        end loop;
+    end if;
+    
+exception
+when others then
+    dbms_output.put_line('The error has occured in the print_region_array procedure');
+end print_region_array;
+
+procedure country_languages(p_country_name varchar2, p_languages_info_output out t_country_languages) as
+p_country_language r_country_language;
+v_index            pls_integer := 1;     
+begin
+    for i in (select country_name, language_name, official
+              from countries c
+              left join spoken_languages s on s.country_id = c.country_id
+              left join languages l on l.language_id = s.language_id
+              where lower(country_name) = lower(p_country_name))
+    loop
+        p_country_language.country_name  := i.country_name;
+        p_country_language.language_name := i.language_name;
+        p_country_language.official      := i.official;      
+        
+        p_languages_info_output(v_index) := p_country_language;
+        v_index := v_index + 1;
+    end loop;
+    
+exception
+when no_data_found then
+    dbms_output.put_line('No data found in the country_languages procedure');  
+end country_languages;
+
+procedure print_language_array(p_languages_info_output t_country_languages) as
+begin
+    if (p_languages_info_output.count = 0) then
+        dbms_output.put_line('No data found');
+        return;
+    else
+        for i in 1..p_languages_info_output.count
+        loop
+            dbms_output.put_line('Country: '       || p_languages_info_output(i).country_name
+                                 || ', Language: ' || p_languages_info_output(i).language_name
+                                 || ', Official: ' || case when p_languages_info_output(i).official = 'Y' then 'Yes' else 'No' end);
+        end loop;
+    end if;
+    
+exception
+when others then
+    dbms_output.put_line('The error has occured in the print_language_array procedure');
+end print_language_array;
+
+end traveler_assistance_package;
+/
